@@ -148,7 +148,7 @@ Hệ thống DNS lai được thiết kế với AWS Route 53 Resolver endpoints
 
 ### Resource Allocation
 
-- 1 kỹ sư thực hiện từ đầu đến cuối
+- 1 người tự thực hiện toàn bộ dự án: từ nghiên cứu, thiết kế, triển khai, kiểm thử đến giám sát và tối ưu
 - 2–3 tuần là đủ xử lý hoàn chỉnh độc lập
 
 ---
