@@ -1,193 +1,230 @@
-# Hybrid DNS Proposal
+# Hybrid DNS Management with AWS Route 53
 
-## Slide 1
+## Hybrid DNS Management Solution for Enterprise Infrastructure
 
-Hybrid DNS Management with Route 53
+---
 
-## Slide 1
-
-Hybrid DNS Management Solution for Enterprise Infrastructure
-Người thực hiện: Phan Tiến Sĩ
-Ngày: 08/07/2025
-
-## Slide 2
-
-Executive Summary(Tóm tắt điều hành)
-
-## Slide 2
+# Executive Summary
 
 Tài liệu này trình bày một giải pháp DNS lai sử dụng AWS Route 53 kết hợp với hệ thống DNS tại chỗ nhằm đảm bảo khả năng phân giải tên miền ổn định, bảo mật và dễ quản lý cho doanh nghiệp.
-Vấn đề: Hệ thống DNS bị phân mảnh giữa môi trường tại chỗ và cloud gây khó khăn trong quản trị và độ tin cậy thấp.
-Giải pháp:
-Tích hợp Route 53 Resolver Endpoints (Inbound/Outbound)
-Thiết lập Split-horizon DNS
-Cấu hình Conditional Forwarding
-Giám sát và bảo mật bằng CloudWatch và GuardDuty
-Lợi ích:
-Phân giải DNS thống nhất
-Cải thiện độ tin cậy và bảo mật
-Giảm thiểu lỗi thủ công và chi phí vận hành
-Chi phí: Ước tính $70 - $120/thángThời gian triển khai: 2–3 tuầnThành công: >99.9% uptime, độ trễ DNS < 50ms, cấu hình DR hiệu quả
 
-## Slide 3
+**Vấn đề:** Hệ thống DNS bị phân mảnh giữa môi trường tại chỗ và cloud gây khó khăn trong quản trị và độ tin cậy thấp.
 
-Problem Statement(Vấn đề cần giải quyết)
+**Giải pháp:**
 
-## Slide 3
+- Tích hợp Route 53 Resolver Endpoints (Inbound/Outbound)
+- Thiết lập Split-horizon DNS
+- Cấu hình Conditional Forwarding
+- Giám sát và bảo mật bằng CloudWatch và GuardDuty
 
-Current Situation
-Nhiều tổ chức đang vận hành DNS theo hai hệ thống riêng biệt giữa on-prem và AWS, gây khó khăn trong việc đảm bảo độ nhất quán và khả năng phục hồi.
-Key Challenges
-Thiếu phân giải DNS thống nhất
-Khó kiểm soát bảo mật và giám sát
-Không có khả năng chuyển đổi tự động khi có lỗi
-Stakeholder Impact
-DevOps gặp khó khăn trong quản lý DNS
-Người dùng bị ảnh hưởng bởi các lỗi phân giải
-Doanh nghiệp chịu rủi ro SLA vi phạm
-Business Consequences
-Gián đoạn dịch vụ
-Mất dữ liệu hoặc truy cập chậm
-Tăng chi phí bảo trì
+**Lợi ích:**
 
-## Slide 4
+- Phân giải DNS thống nhất
+- Cải thiện độ tin cậy và bảo mật
+- Giảm thiểu lỗi thủ công và chi phí vận hành
 
-Solution Architecture(Kiến trúc giải pháp)
+**Chi phí:** Ước tính $70 - $120/tháng  
+**Thời gian triển khai:** 2–3 tuần  
+**Thành công:** >99.9% uptime, độ trễ DNS < 50ms, cấu hình DR hiệu quả
 
-## Slide 4
+---
 
-Architecture Overview
-Thiết kế hệ thống DNS lai bao gồm AWS Route 53 Resolver và DNS tại chỗ, kết nối qua VPN/Direct Connect.
-AWS Services Used
-Amazon VPC
-Route 53 Resolver (Inbound & Outbound Endpoints)
-IAM, CloudWatch Logs, GuardDuty
-Component Design
-VPC chứa 2 subnet riêng tư
-EC2 để kiểm thử DNS
-DNS on-prem như Windows DNS/BIND server
-Security Architecture
-SG mở cổng 53 UDP/TCP theo IP cố định
-Ghi log DNS truy vấn
-IAM phân quyền truy cập cấu hình DNS
-Scalability Design
-Hỗ trợ nhiều VPC kết nối qua peering
-Mở rộng quy tắc chuyển tiếp DNS theo nhiều domain
+# 1. Problem Statement
 
-## Slide 5
+## Current Situation
 
-Technical Implementation(Triển khai kỹ thuật)
+Doanh nghiệp có hệ thống DNS riêng tại chỗ, nhưng ngày càng mở rộng lên AWS và gặp vấn đề đồng bộ hóa phân giải DNS, ảnh hưởng đến hoạt động ứng dụng và khả năng giám sát.
 
-## Slide 5
+## Key Challenges
 
-Implementation Phases
-Tạo VPC và EC2 kiểm thử
-Cấu hình Route 53 Endpoints
-Thiết lập Conditional Forwarding
-Tạo hosted zones và kiểm thử
-Ghi log và bảo mật
-Technical Requirements
-1 VPC + 3 subnet
-EC2 (Amazon Linux 2)
-Quyền IAM đủ cấu hình Route 53
-On-prem DNS có thể nhận/gửi truy vấn
-Development Approach
-Sử dụng AWS Console và CLI
-Hạ tầng quản lý bằng Terraform (optional)
-Testing Strategy
-Dùng dig, nslookup từ EC2 test
-Ghi log CloudWatch để giám sát truy vấn
-Deployment Plan
-Theo từng giai đoạn nhỏ, validate liên tục
-Rollback dễ dàng bằng cách gỡ endpoint hoặc SG rule
+- Phân giải DNS không thống nhất giữa on-prem và cloud
+- Không có cơ chế dự phòng khi DNS on-prem gặp lỗi
+- Giám sát DNS phân tán, khó kiểm soát truy vấn
 
-## Slide 6
+## Stakeholder Impact
 
-Mô Hình kiến trúc
+- DevOps khó thiết lập và kiểm tra DNS
+- End-user bị gián đoạn truy cập dịch vụ
+- Quản trị viên mạng tốn thời gian xử lý lỗi
 
-## Slide 7
+## Business Consequences
 
-Timeline & Milestones(Mốc thời gian)
+- Downtime dịch vụ dẫn đến mất uy tín
+- Tăng thời gian phản hồi sự cố
+- Không đáp ứng SLA nếu xảy ra lỗi DNS
 
-## Slide 7
+---
 
-Key Milestones
-Inbound/Outbound endpoints hoạt động
-Forwarding rule phân giải đúng domain
-Ghi log DNS hoạt động đầy đủ
-Dependencies
-VPN kết nối on-prem
-Đội quản trị hệ thống on-prem
-Resource Allocation
-1 người tự thực hiện toàn bộ dự án: từ nghiên cứu, thiết kế, triển khai, kiểm thử đến giám sát và tối ưu
-Thời gian thực hiện: 2–3 tuần với toàn bộ công việc được xử lý độc lập
+# 2. Solution Architecture
 
-## Slide 8
+## Architecture Overview
 
-Budget Estimation(Ước tính chi phí)
+Hệ thống DNS lai được thiết kế với AWS Route 53 Resolver endpoints giao tiếp với DNS on-prem để xử lý các truy vấn giữa hai môi trường.
 
-## Slide 8
+## AWS Services Used
 
-Development Costs
-Công phát triển nội bộ
-Operational Costs
-CloudWatch monitoring
-Logging retention chi phí nhỏ
-ROI Analysis
-Tăng độ tin cậy dịch vụ → giảm lỗi DNS
-Quản lý tập trung → giảm thời gian vận hành
+- Amazon VPC
+- Route 53 Resolver (Inbound, Outbound)
+- EC2 (test DNS)
+- IAM, CloudWatch Logs, GuardDuty
 
-## Slide 9
+## Component Design
 
-Risk Assessment(Đánh giá rủi ro)
+- 1 VPC gồm public & private subnet
+- EC2 để test DNS từ private subnet
+- Conditional forwarding cho tên miền nội bộ
+- Hosted zones cấu hình Split DNS
 
-## Slide 9
+## Security Architecture
 
-Mitigation Strategies
-Kiểm tra từng bước triển khai
-Định kỳ rà soát log
-Contingency Plans
-Cấu hình fallback DNS
-Tạo Route 53 health checks tự động chuyển hướng
+- Mở cổng 53 UDP/TCP với Security Group
+- Sử dụng IAM để phân quyền DNS ops
+- Kết hợp GuardDuty & VPC Flow Logs giám sát truy vấn
 
-## Slide 10
+## Scalability Design
 
-Expected Outcomes(Kết quả kỳ vọng)
+- Hỗ trợ forward nhiều miền (multi-rule)
+- Thiết kế multi-AZ, multi-VPC với shared resolver
+- Có thể tích hợp với các mô hình hybrid khác như AD Connector
 
-## Slide 10
+---
 
-Success Metrics
-Độ trễ DNS <50ms
-Không có lỗi phân giải sau khi triển khai
-99.9% thời gian hoạt động DNS
-Business Benefits
-Tối ưu hoạt động đa môi trường (hybrid)
-Cải thiện bảo mật DNS
-Quản lý linh hoạt hơn
-Technical Improvements
-DNS tập trung
-Quy tắc rõ ràng, có kiểm soát
-Long-term Value
-Sẵn sàng multi-cloud
-Tự động hoá giám sát DNS
-Hạn chế lỗi do thao tác thủ công
+# 3. Technical Implementation
 
-## Slide 11
+## Implementation Phases
 
-Appendices(Phụ Lục)
+1. Tạo VPC, EC2, Resolver Endpoint
+2. Cấu hình DNS on-prem và routing
+3. Thiết lập forwarding rule, tạo hosted zones
+4. Ghi log, giám sát
+5. Tối ưu và bàn giao
 
-## Slide 11
+## Technical Requirements
 
-A. Technical Specifications
-CIDR VPC: 10.0.0.0/16
-Subnet: 10.0.1.0/24, 10.0.2.0/24
-Inbound/Outbound IP: auto-assign
-B. Cost Calculations
-Ước tính CloudWatch log dựa theo log entries 1 triệu/tháng
-C. Architecture Diagrams
-[DNS Architecture Diagram - đính kèm file PNG]
-D. References
-AWS Route 53 Resolver Documentation
-AWS Security Best Practices
-Hybrid DNS whitepapers
+- AWS Account có quyền Route 53 Resolver
+- Kết nối VPN hoặc Direct Connect đến on-prem
+- On-prem DNS cho phép truy vấn từ AWS IP
+
+## Development Approach
+
+- Kết hợp sử dụng AWS Console và CloudShell
+- Dùng script dig/nslookup để kiểm thử
+- Terraform để quản lý nếu triển khai nhiều VPC
+
+## Testing Strategy
+
+- `dig`, `nslookup` từ EC2 đến DNS on-prem
+- Test thất bại → chuyển sang resolver dự phòng
+- Ghi log truy vấn bằng CloudWatch
+
+## Deployment Plan
+
+- Theo từng giai đoạn nhỏ, validate liên tục
+- Rollback bằng cách xóa rule/resolver nếu cần
+
+---
+
+# 4. Timeline & Milestones
+
+### Timeline
+
+| Tuần | Mốc công việc                        |
+|------|--------------------------------------|
+| 1    | Tạo VPC, EC2, Resolver Endpoint      |
+| 1.5  | Cấu hình DNS on-prem và routing      |
+| 2    | Kiểm thử và tối ưu                   |
+| 2.5  | Ghi log, giám sát, bàn giao          |
+
+### Milestones
+
+- Inbound/Outbound resolver hoạt động
+- Rule phân giải chính xác
+- DNS query log ghi nhận đầy đủ
+
+### Dependencies
+
+- VPN kết nối on-prem
+- Đội hạ tầng cung cấp DNS private zone
+
+### Resource Allocation
+
+- 1 kỹ sư thực hiện từ đầu đến cuối
+- 2–3 tuần là đủ xử lý hoàn chỉnh độc lập
+
+---
+
+# 5. Budget Estimation
+
+| Hạng mục         | Chi phí (tháng) |
+|------------------|-----------------|
+| Resolver         | $50–80          |
+| EC2 test         | ~$10            |
+| CloudWatch Logs  | $5–10           |
+| Khác (log, NAT…) | $5–20           |
+
+**Development Cost:** nội bộ tự triển khai  
+**Operational Cost:** monitoring + NAT + logs  
+**ROI:** giảm downtime DNS, tăng độ tin cậy phân giải → giảm công sức vận hành
+
+---
+
+# 6. Risk Assessment
+
+| Rủi ro                  | Tác động | Xác suất | Giảm thiểu                          |
+|-------------------------|----------|----------|--------------------------------------|
+| Sai cấu hình Rule DNS   | Cao      | TB       | Template + rà soát peer              |
+| Kết nối VPN thất bại    | Cao      | Thấp     | Test kết nối kỹ trước khi triển khai|
+| Chi phí tăng đột ngột   | TB       | TB       | Giám sát bằng CloudWatch Budgets    |
+| DNS bị tấn công         | Cao      | Thấp     | GuardDuty + SG chỉ định IP cụ thể    |
+
+---
+
+# 7. Expected Outcomes
+
+## Success Metrics
+
+- DNS uptime > 99.9%
+- Tối ưu độ trễ < 50ms
+- > 95% DNS query xử lý thành công lần đầu
+
+## Business Benefits
+
+- Đảm bảo truy cập ổn định giữa hybrid workloads
+- Tự động hoá failover DNS giúp giảm sự cố
+
+## Technical Improvements
+
+- Kết hợp DNS on-prem & cloud trong 1 kiến trúc chuẩn
+- Cho phép ghi log & giám sát truy vấn
+
+## Long-term Value
+
+- Mở rộng dễ dàng với multi-VPC & multi-account
+- Có thể dùng cho Active Directory, hybrid apps…
+
+---
+
+# Appendices
+
+## A. Technical Specifications
+
+- VPC CIDR: 10.0.0.0/16
+- Subnet: 10.0.0.0/24 (public), 10.0.1.0/24 & 10.0.2.0/24 (private)
+- Outbound resolver IP: auto-assigned
+
+## B. Cost Calculations
+
+- Resolver: $0.125/hour/endpoint x 2 x 730h ~ $50–60
+- Logs: $0.50/GB ghi + lưu trữ
+
+## C. Architecture Diagrams
+
+- [ ] Đính kèm sơ đồ Route 53 resolver (PNG)
+- [ ] Flow DNS query từ EC2 → Outbound → On-prem
+
+## D. References
+
+- https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resolver.html
+- AWS Well-Architected Hybrid Networking whitepaper
+- Hands-on: Hybrid DNS Resolver setup
 
