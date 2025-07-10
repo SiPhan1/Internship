@@ -219,7 +219,7 @@ Hệ thống DNS lai được thiết kế với AWS Route 53 Resolver endpoints
 
 ## C. Architecture Diagrams
 
-- [ ] Đính kèm sơ đồ Route 53 resolver (PNG)
+![DNS Architecture](dns-architecture.png)
 - [ ] Flow DNS query từ EC2 → Outbound → On-prem
 
 ## D. References
